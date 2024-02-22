@@ -14,9 +14,12 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus-community/postgres_exporter/collector"
@@ -27,27 +30,25 @@ import (
 	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
-	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
 )
 
 var (
-	c = config.ConfigHandler{
+	c = config.Handler{
 		Config: &config.Config{},
 	}
 
 	configFile             = kingpin.Flag("config.file", "Postgres exporter configuration file.").Default("postgres_exporter.yml").String()
-	listenAddress          = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9187").Envar("PG_EXPORTER_WEB_LISTEN_ADDRESS").String()
-	webConfig              = webflag.AddFlags(kingpin.CommandLine)
-	metricPath             = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").Envar("PG_EXPORTER_WEB_TELEMETRY_PATH").String()
+	webConfig              = kingpinflag.AddFlags(kingpin.CommandLine, ":9187")
+	metricsPath            = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").Envar("PG_EXPORTER_WEB_TELEMETRY_PATH").String()
 	disableDefaultMetrics  = kingpin.Flag("disable-default-metrics", "Do not include default metrics.").Default("false").Envar("PG_EXPORTER_DISABLE_DEFAULT_METRICS").Bool()
 	disableSettingsMetrics = kingpin.Flag("disable-settings-metrics", "Do not include pg_settings metrics.").Default("false").Envar("PG_EXPORTER_DISABLE_SETTINGS_METRICS").Bool()
-	autoDiscoverDatabases  = kingpin.Flag("auto-discover-databases", "Whether to discover the databases on a server dynamically.").Default("false").Envar("PG_EXPORTER_AUTO_DISCOVER_DATABASES").Bool()
-	queriesPath            = kingpin.Flag("extend.query-path", "Path to custom queries to run.").Default("").Envar("PG_EXPORTER_EXTEND_QUERY_PATH").String()
+	autoDiscoverDatabases  = kingpin.Flag("auto-discover-databases", "Whether to discover the databases on a server dynamically. (DEPRECATED)").Default("false").Envar("PG_EXPORTER_AUTO_DISCOVER_DATABASES").Bool()
+	queriesPath            = kingpin.Flag("extend.query-path", "Path to custom queries to run. (DEPRECATED)").Default("").Envar("PG_EXPORTER_EXTEND_QUERY_PATH").String()
 	onlyDumpMaps           = kingpin.Flag("dumpmaps", "Do not run, simply dump the maps.").Bool()
-	constantLabelsList     = kingpin.Flag("constantLabels", "A list of label=value separated by comma(,).").Default("").Envar("PG_EXPORTER_CONSTANT_LABELS").String()
-	excludeDatabases       = kingpin.Flag("exclude-databases", "A list of databases to remove when autoDiscoverDatabases is enabled").Default("").Envar("PG_EXPORTER_EXCLUDE_DATABASES").String()
-	includeDatabases       = kingpin.Flag("include-databases", "A list of databases to include when autoDiscoverDatabases is enabled").Default("").Envar("PG_EXPORTER_INCLUDE_DATABASES").String()
+	constantLabelsList     = kingpin.Flag("constantLabels", "A list of label=value separated by comma(,). (DEPRECATED)").Default("").Envar("PG_EXPORTER_CONSTANT_LABELS").String()
+	excludeDatabases       = kingpin.Flag("exclude-databases", "A list of databases to remove when autoDiscoverDatabases is enabled (DEPRECATED)").Default("").Envar("PG_EXPORTER_EXCLUDE_DATABASES").String()
+	includeDatabases       = kingpin.Flag("include-databases", "A list of databases to include when autoDiscoverDatabases is enabled (DEPRECATED)").Default("").Envar("PG_EXPORTER_INCLUDE_DATABASES").String()
 	metricPrefix           = kingpin.Flag("metric-prefix", "A metric prefix can be used to have non-default (not \"pg\") prefixes for each of the metrics").Default("pg").Envar("PG_EXPORTER_METRIC_PREFIX").String()
 	logger                 = log.NewNopLogger()
 )
@@ -75,17 +76,6 @@ func main() {
 	kingpin.Parse()
 	logger = promlog.New(promlogConfig)
 
-	// landingPage contains the HTML served at '/'.
-	// TODO: Make this nicer and more informative.
-	var landingPage = []byte(`<html>
-	<head><title>Postgres exporter</title></head>
-	<body>
-	<h1>Postgres exporter</h1>
-	<p><a href='` + *metricPath + `'>Metrics</a></p>
-	</body>
-	</html>
-	`)
-
 	if *onlyDumpMaps {
 		dumpMaps()
 		return
@@ -93,7 +83,7 @@ func main() {
 
 	if err := c.ReloadConfig(*configFile, logger); err != nil {
 		// This is not fatal, but it means that auth must be provided for every dsn.
-		level.Error(logger).Log("msg", "Error loading config", "err", err)
+		level.Warn(logger).Log("msg", "Error loading config", "err", err)
 	}
 
 	dsns, err := getDataSources()
@@ -102,13 +92,28 @@ func main() {
 		os.Exit(1)
 	}
 
+	excludedDatabases := strings.Split(*excludeDatabases, ",")
+	level.Info(logger).Log("msg", "Excluded databases", "databases", fmt.Sprintf("%v", excludedDatabases))
+
+	if *queriesPath != "" {
+		level.Warn(logger).Log("msg", "The extended queries.yaml config is DEPRECATED", "file", *queriesPath)
+	}
+
+	if *autoDiscoverDatabases || *excludeDatabases != "" || *includeDatabases != "" {
+		level.Warn(logger).Log("msg", "Scraping additional databases via auto discovery is DEPRECATED")
+	}
+
+	if *constantLabelsList != "" {
+		level.Warn(logger).Log("msg", "Constant labels on all metrics is DEPRECATED")
+	}
+
 	opts := []ExporterOpt{
 		DisableDefaultMetrics(*disableDefaultMetrics),
 		DisableSettingsMetrics(*disableSettingsMetrics),
 		AutoDiscoverDatabases(*autoDiscoverDatabases),
 		WithUserQueriesPath(*queriesPath),
 		WithConstantLabels(*constantLabelsList),
-		ExcludeDatabases(*excludeDatabases),
+		ExcludeDatabases(excludedDatabases),
 		IncludeDatabases(*includeDatabases),
 	}
 
@@ -129,26 +134,42 @@ func main() {
 
 	pe, err := collector.NewPostgresCollector(
 		logger,
+		excludedDatabases,
 		dsn,
 		[]string{},
 	)
 	if err != nil {
-		level.Error(logger).Log("msg", "Failed to create PostgresCollector", "err", err.Error())
+		level.Warn(logger).Log("msg", "Failed to create PostgresCollector", "err", err.Error())
 	} else {
 		prometheus.MustRegister(pe)
 	}
 
-	http.Handle(*metricPath, promhttp.Handler())
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=UTF-8") // nolint: errcheck
-		w.Write(landingPage)                                       // nolint: errcheck
-	})
+	http.Handle(*metricsPath, promhttp.Handler())
 
-	http.HandleFunc("/probe", handleProbe(logger))
+	if *metricsPath != "/" && *metricsPath != "" {
+		landingConfig := web.LandingConfig{
+			Name:        "Postgres Exporter",
+			Description: "Prometheus PostgreSQL server Exporter",
+			Version:     version.Info(),
+			Links: []web.LandingLinks{
+				{
+					Address: *metricsPath,
+					Text:    "Metrics",
+				},
+			},
+		}
+		landingPage, err := web.NewLandingPage(landingConfig)
+		if err != nil {
+			level.Error(logger).Log("err", err)
+			os.Exit(1)
+		}
+		http.Handle("/", landingPage)
+	}
 
-	level.Info(logger).Log("msg", "Listening on address", "address", *listenAddress)
-	srv := &http.Server{Addr: *listenAddress}
-	if err := web.ListenAndServe(srv, *webConfig, logger); err != nil {
+	http.HandleFunc("/probe", handleProbe(logger, excludedDatabases))
+
+	srv := &http.Server{}
+	if err := web.ListenAndServe(srv, webConfig, logger); err != nil {
 		level.Error(logger).Log("msg", "Error running HTTP server", "err", err)
 		os.Exit(1)
 	}
