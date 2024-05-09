@@ -16,7 +16,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -26,7 +25,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func handleProbe(logger log.Logger) http.HandlerFunc {
+func handleProbe(logger log.Logger, excludeDatabases []string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		conf := c.GetConfig()
@@ -62,21 +61,9 @@ func handleProbe(logger log.Logger) http.HandlerFunc {
 
 		// TODO(@sysadmind): Timeout
 
-		probeSuccessGauge := prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "probe_success",
-			Help: "Displays whether or not the probe was a success",
-		})
-		probeDurationGauge := prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "probe_duration_seconds",
-			Help: "Returns how long the probe took to complete in seconds",
-		})
-
 		tl := log.With(logger, "target", target)
 
-		start := time.Now()
 		registry := prometheus.NewRegistry()
-		registry.MustRegister(probeSuccessGauge)
-		registry.MustRegister(probeDurationGauge)
 
 		opts := []ExporterOpt{
 			DisableDefaultMetrics(*disableDefaultMetrics),
@@ -84,7 +71,7 @@ func handleProbe(logger log.Logger) http.HandlerFunc {
 			AutoDiscoverDatabases(*autoDiscoverDatabases),
 			WithUserQueriesPath(*queriesPath),
 			WithConstantLabels(*constantLabelsList),
-			ExcludeDatabases(*excludeDatabases),
+			ExcludeDatabases(excludeDatabases),
 			IncludeDatabases(*includeDatabases),
 		}
 
@@ -96,13 +83,15 @@ func handleProbe(logger log.Logger) http.HandlerFunc {
 		registry.MustRegister(exporter)
 
 		// Run the probe
-		pc, err := collector.NewProbeCollector(tl, registry, dsn)
+		pc, err := collector.NewProbeCollector(tl, excludeDatabases, registry, dsn)
 		if err != nil {
-			probeSuccessGauge.Set(0)
-			probeDurationGauge.Set(time.Since(start).Seconds())
+			level.Error(logger).Log("msg", "Error creating probe collector", "err", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		// Cleanup underlying connections to prevent connection leaks
+		defer pc.Close()
 
 		// TODO(@sysadmind): Remove the registry.MustRegister() call below and instead handle the collection here. That will allow
 		// for the passing of context, handling of timeouts, and more control over the collection.
@@ -111,10 +100,6 @@ func handleProbe(logger log.Logger) http.HandlerFunc {
 		_ = ctx
 
 		registry.MustRegister(pc)
-
-		duration := time.Since(start).Seconds()
-		probeDurationGauge.Set(duration)
-		probeSuccessGauge.Set(1)
 
 		// TODO check success, etc
 		h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
