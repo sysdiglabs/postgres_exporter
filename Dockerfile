@@ -1,4 +1,4 @@
-FROM golang:1.20.4 as base
+FROM golang:1.22.3 as base
 ARG VERSION
 ARG GIT_COMMIT
 ARG DATE
