@@ -1,4 +1,4 @@
-FROM golang:1.21.12 AS base
+FROM golang:1.23.1 AS base
 ARG VERSION
 ARG GIT_COMMIT
 ARG DATE
@@ -18,7 +18,7 @@ EXPOSE     9187
 USER       59000:59000
 ENTRYPOINT [ "/bin/postgres_exporter" ]
 
-FROM quay.io/sysdig/sysdig-mini-ubi9:1.3.5 AS ubi
+FROM quay.io/sysdig/sysdig-mini-ubi9:1.3.9 AS ubi
 COPY --from=builder /bin/postgres_exporter /bin/postgres_exporter
 EXPOSE     9187
 USER       59000:59000
