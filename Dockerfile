@@ -13,7 +13,7 @@ ENV CGO_ENABLED=1
 ENV GOEXPERIMENT=boringcrypto
 
 RUN go mod tidy
-RUN make build
+RUN CGO_ENABLED=1 GOEXPERIMENT=boringcrypto make build
 RUN cp postgres_exporter /bin/postgres_exporter
 
 FROM scratch AS scratch
