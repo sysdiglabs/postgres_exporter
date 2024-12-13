@@ -19,8 +19,6 @@ import (
 	"sync"
 	"time"
 
-	_ "crypto/tls/fipsonly"
-
 	"github.com/blang/semver/v4"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
