@@ -25,6 +25,10 @@
 # Ensure GOBIN is not set during build so that promu is installed to the correct path
 unexport GOBIN
 
+# Export flags required for FIPS compliance
+export CGO_ENABLED=1
+export GOEXPERIMENT=boringcrypto
+
 GO           ?= go
 GOFMT        ?= $(GO)fmt
 FIRST_GOPATH := $(firstword $(subst :, ,$(shell $(GO) env GOPATH)))
