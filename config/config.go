@@ -18,6 +18,8 @@ import (
 	"os"
 	"sync"
 
+	_ "crypto/tls/fipsonly"
+
 	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

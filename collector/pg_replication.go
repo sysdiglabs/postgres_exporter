@@ -16,8 +16,6 @@ package collector
 import (
 	"context"
 
-	_ "crypto/tls/fipsonly"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
