@@ -37,13 +37,15 @@ jobs:
     environment:
       DATA_SOURCE_NAME: 'postgresql://postgres:test@localhost:5432/circle_test?sslmode=disable'
       GOOPTS: '-v -tags integration'
+      CGO_ENABLED: 1
+      GOEXPERIMENT: boringcrypto
 
     steps:
     - checkout
     - setup_remote_docker
     - run: docker version
-    - run: CGO_ENABLED=1 make build
-    - run: GOEXPERIMENT=boringcrypto make test
+    - run: make build
+    - run: make test
 
 workflows:
   version: 2
