@@ -201,7 +201,7 @@ common-unused:
 common-build: promu
 	@echo ">> building binaries"
 	@env
-	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto $(§) build --prefix $(PREFIX) $(PROMU_BINARIES)
+	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto $(PROMU) build --prefix $(PREFIX) $(PROMU_BINARIES)
 
 .PHONY: common-tarball
 common-tarball: promu
