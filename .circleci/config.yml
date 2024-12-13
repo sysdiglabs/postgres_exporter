@@ -42,8 +42,8 @@ jobs:
     - checkout
     - setup_remote_docker
     - run: docker version
-    - run: make build
-    - run: make test
+    - run: CGO_ENABLED=1 make build
+    - run: GOEXPERIMENT=boringcrypto make test
 
 workflows:
   version: 2
