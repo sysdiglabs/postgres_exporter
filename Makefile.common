@@ -153,7 +153,7 @@ common-test-short: $(GOTEST_DIR)
 .PHONY: common-test
 common-test: $(GOTEST_DIR)
 	@echo ">> running all tests"
-	$(GOTEST) $(test-flags) $(GOOPTS) $(pkgs)
+	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto $(GOTEST) $(test-flags) $(GOOPTS) $(pkgs)
 
 $(GOTEST_DIR):
 	@mkdir -p $@
@@ -201,7 +201,7 @@ common-unused:
 common-build: promu
 	@echo ">> building binaries"
 	@env
-	$(PROMU) build --prefix $(PREFIX) $(PROMU_BINARIES)
+	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto $(PROMU) build --prefix $(PREFIX) $(PROMU_BINARIES)
 
 .PHONY: common-tarball
 common-tarball: promu
@@ -241,6 +241,7 @@ $(PROMU):
 	$(eval PROMU_TMP := $(shell mktemp -d))
 	curl -s -L $(PROMU_URL) | tar -xvzf - -C $(PROMU_TMP)
 	sed -i '/^go:/a \ \ cgo: true' $(PROMU_TMP)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM)/.promu.yml
+	cat $(PROMU_TMP)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM)/.promu.yml
 	mkdir -p $(FIRST_GOPATH)/bin
 	cp $(PROMU_TMP)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM)/promu $(FIRST_GOPATH)/bin/promu
 	rm -r $(PROMU_TMP)
