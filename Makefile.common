@@ -153,7 +153,7 @@ common-test-short: $(GOTEST_DIR)
 .PHONY: common-test
 common-test: $(GOTEST_DIR)
 	@echo ">> running all tests"
-	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto $(GOTEST) $(test-flags) $(GOOPTS) $(pkgs)
+	$(GOTEST) $(test-flags) $(GOOPTS) $(pkgs)
 
 $(GOTEST_DIR):
 	@mkdir -p $@
@@ -201,7 +201,7 @@ common-unused:
 common-build: promu
 	@echo ">> building binaries"
 	@env
-	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto $(PROMU) build --prefix $(PREFIX) $(PROMU_BINARIES)
+	$(PROMU) build --prefix $(PREFIX) $(PROMU_BINARIES)
 
 .PHONY: common-tarball
 common-tarball: promu
