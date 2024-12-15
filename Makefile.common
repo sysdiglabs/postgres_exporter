@@ -200,7 +200,6 @@ common-unused:
 .PHONY: common-build
 common-build: promu
 	@echo ">> building binaries"
-	@env
 	$(PROMU) build --prefix $(PREFIX) $(PROMU_BINARIES)
 
 .PHONY: common-tarball
