@@ -16,6 +16,9 @@ jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: 1
+      GOEXPERIMENT: boringcrypto
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1

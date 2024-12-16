@@ -19,6 +19,8 @@ import (
 	"os"
 	"strings"
 
+	_ "crypto/tls/fipsonly"
+
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"

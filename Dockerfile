@@ -8,6 +8,10 @@ WORKDIR /go/src/github.com/prometheus-community/postgres_exporter
 
 FROM base AS builder
 COPY . .
+
+ENV CGO_ENABLED=1
+ENV GOEXPERIMENT=boringcrypto
+
 RUN go mod tidy
 RUN make build
 RUN cp postgres_exporter /bin/postgres_exporter
