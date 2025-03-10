@@ -29,6 +29,10 @@ jobs:
       - name: Install snmp_exporter/generator dependencies
         run: sudo apt-get update && sudo apt-get -y install libsnmp-dev
         if: github.repository == 'prometheus/snmp_exporter'
+      - name: Download Go modules
+        run: go mod download
+      - name: Tidy Go Modules
+        run: go mod tidy
       - name: Lint
         uses: golangci/golangci-lint-action@3a919529898de77ec3da873e3063ca4b10e7f5cc # v3.7.0
         with:
