@@ -29,6 +29,8 @@ jobs:
       - name: Install snmp_exporter/generator dependencies
         run: sudo apt-get update && sudo apt-get -y install libsnmp-dev
         if: github.repository == 'prometheus/snmp_exporter'
+      - name: Clear Go Module Cache
+        run: go clean -modcache
       - name: Download Go modules
         run: go mod download
       - name: Tidy Go Modules
