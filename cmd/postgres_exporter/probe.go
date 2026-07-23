@@ -91,7 +91,7 @@ func handleProbe(logger log.Logger, excludeDatabases []string) http.HandlerFunc 
 		}
 
 		// Cleanup underlying connections to prevent connection leaks
-		defer pc.Close()
+		defer func() { _ = pc.Close() }()
 
 		// TODO(@sysadmind): Remove the registry.MustRegister() call below and instead handle the collection here. That will allow
 		// for the passing of context, handling of timeouts, and more control over the collection.

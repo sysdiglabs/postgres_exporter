@@ -67,7 +67,7 @@ func (c *PGStatioUserIndexesCollector) Update(ctx context.Context, instance *ins
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var schemaname, relname, indexrelname sql.NullString
 		var idxBlksRead, idxBlksHit sql.NullFloat64

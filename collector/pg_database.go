@@ -75,7 +75,7 @@ func (c PGDatabaseCollector) Update(ctx context.Context, instance *instance, ch 
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var databases []string
 

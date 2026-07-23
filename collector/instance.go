@@ -38,7 +38,7 @@ func newInstance(dsn string) (*instance, error) {
 	if err != nil {
 		return nil, err
 	}
-	db.Close()
+	_ = db.Close()
 
 	return i, nil
 }

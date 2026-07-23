@@ -135,13 +135,13 @@ func (c *PGStatWalReceiverCollector) Update(ctx context.Context, instance *insta
 		query = fmt.Sprintf(pgStatWalReceiverQueryTemplate, "")
 	}
 
-	hasFlushedLSNRows.Close()
+	_ = hasFlushedLSNRows.Close()
 
 	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var upstreamHost, slotName, status sql.NullString
 		var receiveStartLsn, receiveStartTli, flushedLsn, receivedTli, latestEndLsn, upstreamNode sql.NullInt64
