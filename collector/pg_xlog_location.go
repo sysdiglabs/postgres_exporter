@@ -69,7 +69,7 @@ func (c PGXlogLocationCollector) Update(ctx context.Context, instance *instance,
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var bytes float64

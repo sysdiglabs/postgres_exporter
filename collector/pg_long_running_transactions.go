@@ -66,7 +66,7 @@ func (PGLongRunningTransactionsCollector) Update(ctx context.Context, instance *
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var transactions, ageInSeconds float64

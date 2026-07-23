@@ -141,7 +141,7 @@ func (c *PGStatWalReceiverCollector) Update(ctx context.Context, instance *insta
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var upstreamHost, slotName, status sql.NullString
 		var receiveStartLsn, receiveStartTli, flushedLsn, receivedTli, latestEndLsn, upstreamNode sql.NullInt64

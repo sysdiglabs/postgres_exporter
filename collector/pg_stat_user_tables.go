@@ -193,7 +193,7 @@ func (c *PGStatUserTablesCollector) Update(ctx context.Context, instance *instan
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var datname, schemaname, relname sql.NullString

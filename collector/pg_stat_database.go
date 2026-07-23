@@ -250,7 +250,7 @@ func (c *PGStatDatabaseCollector) Update(ctx context.Context, instance *instance
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var datid, datname sql.NullString
