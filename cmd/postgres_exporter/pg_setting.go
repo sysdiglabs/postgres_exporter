@@ -42,7 +42,7 @@ func querySettings(ch chan<- prometheus.Metric, server *Server) error {
 
 	rows, err := server.db.Query(query)
 	if err != nil {
-		return fmt.Errorf("Error running query on database %q: %s %v", server, namespace, err)
+		return fmt.Errorf("error running query on database %q: %s %v", server, namespace, err)
 	}
 	defer rows.Close() // nolint: errcheck
 
@@ -50,7 +50,7 @@ func querySettings(ch chan<- prometheus.Metric, server *Server) error {
 		s := &pgSetting{}
 		err = rows.Scan(&s.name, &s.setting, &s.unit, &s.shortDesc, &s.vartype)
 		if err != nil {
-			return fmt.Errorf("Error retrieving rows on %q: %s %v", server, namespace, err)
+			return fmt.Errorf("error retrieving rows on %q: %s %v", server, namespace, err)
 		}
 
 		ch <- s.metric(server.labels)
@@ -68,7 +68,7 @@ type pgSetting struct {
 func (s *pgSetting) metric(labels prometheus.Labels) prometheus.Metric {
 	var (
 		err       error
-		name      = strings.Replace(s.name, ".", "_", -1)
+		name      = strings.ReplaceAll(s.name, ".", "_")
 		unit      = s.unit // nolint: ineffassign
 		shortDesc = fmt.Sprintf("Server Parameter: %s", s.name)
 		subsystem = "settings"
@@ -120,7 +120,7 @@ func (s *pgSetting) normaliseUnit() (val float64, unit string, err error) {
 
 	val, err = strconv.ParseFloat(s.setting, 64)
 	if err != nil {
-		return val, unit, fmt.Errorf("Error converting setting %q value %q to float: %s", s.name, s.setting, err)
+		return val, unit, fmt.Errorf("error converting setting %q value %q to float: %s", s.name, s.setting, err)
 	}
 
 	// Units defined in: https://www.postgresql.org/docs/current/static/config-setting.html
@@ -132,7 +132,7 @@ func (s *pgSetting) normaliseUnit() (val float64, unit string, err error) {
 	case "B", "kB", "MB", "GB", "TB", "1kB", "2kB", "4kB", "8kB", "16kB", "32kB", "64kB", "16MB", "32MB", "64MB":
 		unit = "bytes"
 	default:
-		err = fmt.Errorf("Unknown unit for runtime variable: %q", s.unit)
+		err = fmt.Errorf("unknown unit for runtime variable: %q", s.unit)
 		return
 	}
 

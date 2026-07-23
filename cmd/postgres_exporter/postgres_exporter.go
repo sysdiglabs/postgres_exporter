@@ -587,11 +587,11 @@ func checkPostgresVersion(db *sql.DB, server string) (semver.Version, string, er
 	var versionString string
 	err := versionRow.Scan(&versionString)
 	if err != nil {
-		return semver.Version{}, "", fmt.Errorf("Error scanning version string on %q: %v", server, err)
+		return semver.Version{}, "", fmt.Errorf("error scanning version string on %q: %v", server, err)
 	}
 	semanticVersion, err := parseVersion(versionString)
 	if err != nil {
-		return semver.Version{}, "", fmt.Errorf("Error parsing version string on %q: %v", server, err)
+		return semver.Version{}, "", fmt.Errorf("error parsing version string on %q: %v", server, err)
 	}
 
 	return semanticVersion, versionString, nil
@@ -601,7 +601,7 @@ func checkPostgresVersion(db *sql.DB, server string) (semver.Version, string, er
 func (e *Exporter) checkMapVersions(ch chan<- prometheus.Metric, server *Server) error {
 	semanticVersion, versionString, err := checkPostgresVersion(server.db, server.String())
 	if err != nil {
-		return fmt.Errorf("Error fetching version string on %q: %v", server, err)
+		return fmt.Errorf("error fetching version string on %q: %v", server, err)
 	}
 
 	if !e.disableDefaultMetrics && semanticVersion.LT(lowestSupportedVersion) {

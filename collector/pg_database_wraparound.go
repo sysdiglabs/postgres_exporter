@@ -70,7 +70,7 @@ func (c *PGDatabaseWraparoundCollector) Update(ctx context.Context, instance *in
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var datname sql.NullString

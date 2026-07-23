@@ -97,7 +97,7 @@ func (c PGLocksCollector) Update(ctx context.Context, instance *instance, ch cha
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var datname, mode sql.NullString
 	var count sql.NullInt64

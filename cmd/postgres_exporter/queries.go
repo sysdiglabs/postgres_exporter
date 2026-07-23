@@ -266,7 +266,7 @@ func addQueries(content []byte, pgVersion semver.Version, server *Server) error 
 func queryDatabases(server *Server) ([]string, error) {
 	rows, err := server.db.Query("SELECT datname FROM pg_database WHERE datallowconn = true AND datistemplate = false AND datname != current_database()")
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving databases: %v", err)
+		return nil, fmt.Errorf("error retrieving databases: %v", err)
 	}
 	defer rows.Close() // nolint: errcheck
 

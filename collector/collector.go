@@ -176,7 +176,7 @@ func (p PostgresCollector) Collect(ch chan<- prometheus.Metric) {
 		level.Error(p.logger).Log("msg", "Error opening connection to database", "err", err)
 		return
 	}
-	defer inst.Close()
+	defer func() { _ = inst.Close() }()
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(p.Collectors))
