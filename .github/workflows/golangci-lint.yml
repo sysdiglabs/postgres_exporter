@@ -1,6 +1,5 @@
 ---
 # This action is synced from https://github.com/prometheus/prometheus
-version: 1
 name: golangci-lint
 on:
   push:
